@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 
 #include "metric.h"
 #include "tool.h"
@@ -67,7 +68,11 @@ void loops_overhead(int samples)
     t0 = rdtsc();
     for (int i = 0; i < samples; ++i);
     t1 = rdtsc();
+#ifdef __APPLE__
     printf("Loops for %d: %llu\n", samples, t1 - t0);
+#else
+    printf("Loops for %d: %lu\n", samples, t1 - t0);
+#endif
 }
 
 /**
@@ -224,4 +229,3 @@ void procsw_overhead(int samples)
     }
     printf("Context switch process: %.2f\n", (double) sum / (double) samples);
 }
-

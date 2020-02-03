@@ -14,8 +14,11 @@ int main(int argc, const char * argv[])
     printf("Preparing auxiliary variables...\n");
     uint64_t t1s = t1s_rdtsc();
     uint64_t toh = t_rdtsc();
+#ifdef __APPLE__
     printf("rdtsc overhead cycles: %llu\n1s cycles: %llu\n", toh, t1s);
-
+#else
+    printf("rdtsc overhead cycles: %lu\n1s cycles: %lu\n", toh, t1s);
+#endif
     loops_overhead(N_LOOPS_LG);
     funccall_overhead(N_LOOPS_LG);
     syscall_overhead(N_LOOPS_SM);
