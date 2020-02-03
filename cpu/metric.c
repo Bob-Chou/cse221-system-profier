@@ -53,7 +53,7 @@ __attribute__((noinline)) void foo7(int a0, int a1, int a2, int a3, int a4, int 
  * helper function, passed to new process
  */
 void * foo_target(void * rtn) {
-    *((uint64_t *) rtn) = rdtsc();
+    *((uint64_t *) rtn) = rdtsc_end();
 
     pthread_exit(NULL);
 }
@@ -65,9 +65,9 @@ void * foo_target(void * rtn) {
 void loops_overhead(int samples)
 {
     uint64_t t0, t1;
-    t0 = rdtsc();
+    t0 = rdtsc_start();
     for (int i = 0; i < samples; ++i);
-    t1 = rdtsc();
+    t1 = rdtsc_end();
 #ifdef __APPLE__
     printf("Loops for %d: %llu\n", samples, t1 - t0);
 #else
@@ -83,52 +83,52 @@ void funccall_overhead(int samples)
 {
     uint64_t t0, t1;
 
-    t0 = rdtsc();
+    t0 = rdtsc_start();
     for (int i = 0; i < samples; ++i)
         foo0();
-    t1 = rdtsc();
+    t1 = rdtsc_end();
     printf("Call (0 params): %.2f\n", (double)(t1 - t0) / (double)samples);
 
-    t0 = rdtsc();
+    t0 = rdtsc_start();
     for (int i = 0; i < samples; ++i)
         foo1(i);
-    t1 = rdtsc();
+    t1 = rdtsc_end();
     printf("Call (1 params): %.2f\n", (double)(t1 - t0) / (double)samples);
 
-    t0 = rdtsc();
+    t0 = rdtsc_start();
     for (int i = 0; i < samples; ++i)
         foo2(i, i);
-    t1 = rdtsc();
+    t1 = rdtsc_end();
     printf("Call (2 params): %.2f\n", (double)(t1 - t0) / (double)samples);
 
-    t0 = rdtsc();
+    t0 = rdtsc_start();
     for (int i = 0; i < samples; ++i)
         foo3(i, i, i);
-    t1 = rdtsc();
+    t1 = rdtsc_end();
     printf("Call (3 params): %.2f\n", (double)(t1 - t0) / (double)samples);
 
-    t0 = rdtsc();
+    t0 = rdtsc_start();
     for (int i = 0; i < samples; ++i)
         foo4(i, i, i, i);
-    t1 = rdtsc();
+    t1 = rdtsc_end();
     printf("Call (4 params): %.2f\n", (double)(t1 - t0) / (double)samples);
 
-    t0 = rdtsc();
+    t0 = rdtsc_start();
     for (int i = 0; i < samples; ++i)
         foo5(i, i, i, i, i);
-    t1 = rdtsc();
+    t1 = rdtsc_end();
     printf("Call (5 params): %.2f\n", (double)(t1 - t0) / (double)samples);
 
-    t0 = rdtsc();
+    t0 = rdtsc_start();
     for (int i = 0; i < samples; ++i)
         foo6(i, i, i, i, i, i);
-    t1 = rdtsc();
+    t1 = rdtsc_end();
     printf("Call (6 params): %.2f\n", (double)(t1 - t0) / (double)samples);
 
-    t0 = rdtsc();
+    t0 = rdtsc_start();
     for (int i = 0; i < samples; ++i)
         foo7(i, i, i, i, i, i, i);
-    t1 = rdtsc();
+    t1 = rdtsc_end();
     printf("Call (7 params): %.2f\n", (double)(t1 - t0) / (double)samples);
 }
 
@@ -138,10 +138,10 @@ void funccall_overhead(int samples)
  */
 void syscall_overhead(int samples)
 {
-    uint64_t t0 = rdtsc();
+    uint64_t t0 = rdtsc_start();
     for (int i = 0; i < samples; ++i)
         getpid();
-    uint64_t t1 = rdtsc();
+    uint64_t t1 = rdtsc_end();
     printf("Syscall: %.2f\n", (double)(t1 - t0) / (double)samples);
 }
 
@@ -161,10 +161,10 @@ void uproc_overhead(int samples)
 
     for(int i = 0; i < samples; ++i)
     {
-        t0 = rdtsc();
+        t0 = rdtsc_start();
         if(fork() == 0)
         {
-            t1 = rdtsc();
+            t1 = rdtsc_end();
             memcpy(shmem, (void *) &t1, sizeof(uint64_t));
             exit(0);
         }
@@ -189,7 +189,7 @@ void kproc_overhead(int samples)
     uint64_t sum = 0;
     for(int i = 0; i < samples; ++i)
     {
-        t0 = rdtsc();
+        t0 = rdtsc_start();
         pthread_create(&th, NULL, foo_target, (void *) &t1);
         pthread_join(th, NULL);
         sum += t1 - t0;
@@ -213,16 +213,15 @@ void procsw_overhead(int samples)
 
     for(int i = 0; i < samples; ++i)
     {
-        t0 = rdtsc();
         if(fork() == 0)
         {
-            t1 = rdtsc();
+            t1 = rdtsc_end();
             write(*(fd + 1), (void*) &t1, sizeof(uint64_t));
             exit(0);
         }
         else
         {
-            t0 = rdtsc();
+            t0 = rdtsc_start();
             read(*fd, (void*) &t1, sizeof(uint64_t));
             sum += t1 - t0;
         }
