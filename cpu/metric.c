@@ -59,6 +59,16 @@ void * foo_target(void * rtn) {
 }
 
 /**
+ * helper function, passed to test K process switching overhead
+ */
+void * pipe_write(void * fd) {
+    uint64_t t1 = rdtsc_end();
+    write(*((int *) fd + 1), (void*) &t1, sizeof(uint64_t));
+
+    pthread_exit(NULL);
+}
+
+/**
  * Profile function call overhead
  * @param samples number of running samples to average
  */
@@ -227,4 +237,29 @@ void procsw_overhead(int samples)
         }
     }
     printf("Context switch process: %.2f\n", (double) sum / (double) samples);
+}
+
+/**
+ * Profile kernel process switching overhead
+ * @param samples number of running samples to average
+ */
+void kprocsw_overhead(int samples)
+{
+    // Use blocking pipe to profile context switch time
+    int * fd = malloc(2*sizeof(int));
+    pipe(fd);
+    pthread_t th;
+    uint64_t t0;
+    uint64_t t1;
+    uint64_t sum = 0;
+
+    for (int i = 0; i < samples; ++i)
+    {
+        pthread_create(&th, NULL, pipe_write, (void *) fd);
+        t0 = rdtsc_start();
+        read(*fd, (void*) &t1, sizeof(uint64_t));
+        pthread_join(th, NULL);
+        sum += t1 - t0;
+    }
+    printf("Context switch kernel process: %.2f\n", (double) sum / (double) samples);
 }

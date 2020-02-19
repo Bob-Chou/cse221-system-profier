@@ -25,6 +25,7 @@ int main(int argc, const char * argv[])
     uproc_overhead(N_LOOPS_SM);
     kproc_overhead(N_LOOPS_SM);
     procsw_overhead(N_LOOPS_SM);
+    kprocsw_overhead(N_LOOPS_SM);
 
     return 0;
 }

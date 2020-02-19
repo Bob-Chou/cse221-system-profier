@@ -30,4 +30,5 @@ void syscall_overhead(int);
 void uproc_overhead(int);
 void kproc_overhead(int);
 void procsw_overhead(int);
+void kprocsw_overhead(int);
 #endif
