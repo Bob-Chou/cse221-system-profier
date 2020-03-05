@@ -1,3 +1,5 @@
+TARGET = cpu 
+
 CC = gcc
 CFLAGS = -Wall -g
 
@@ -9,15 +11,17 @@ else
     $(info $(OS))
 endif
 
-SRC = $(wildcard *.c)
-OBJ = $(patsubst %.c,%.o,$(SRC))
+DIR= ../tools .
+SRC=$(foreach dir,$(DIR),$(wildcard $(dir)/*.c))
+OBJ=$(patsubst %.c,%.o,$(SRC))
+INC=$(foreach dir,$(DIR),-I$(dir))
 
-cpu:$(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@
+$(TARGET):$(OBJ)
+	$(CC) $(CFLAGS) $(notdir $^) -o $@
 
-.c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
+$(OBJ):%.o:%.c
+	$(CC) $(CFLAGS) $(INC) -c $< -o $(notdir $@)
 
 .PHONY:clean
 clean:
-	rm -f *.o cpu
+	rm -f *.o $(TARGET)
