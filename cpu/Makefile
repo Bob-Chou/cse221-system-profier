@@ -1,7 +1,7 @@
-TARGET = cpu 
+TARGET = cpu
 
 CC = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -std=c99
 
 OS = $(shell uname -s)
 

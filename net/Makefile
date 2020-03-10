@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -std=c99
 
 OS = $(shell uname -s)
 
@@ -12,11 +12,15 @@ endif
 DIR = ../tools
 SRC = $(foreach dir,$(DIR),$(wildcard $(dir)/*.c))
 EXT = $(patsubst %.c,%.o,$(SRC))
+OBJ0 = $(EXT) tcp.o
 OBJ1 = $(EXT) server.o
 OBJ2 = $(EXT) client.o
 INC=$(foreach dir,$(DIR),-I$(dir))
 
-all: server client
+all: server tcp client
+
+tcp: $(OBJ0)
+	$(CC) $(CFLAGS) $(notdir $^) -o $@
 
 server: $(OBJ1)
 	$(CC) $(CFLAGS) $(notdir $^) -o $@
@@ -24,10 +28,10 @@ server: $(OBJ1)
 client: $(OBJ2)
 	$(CC) $(CFLAGS) $(notdir $^) -o $@
 
-$(EXT) server.o client.o:%.o:%.c
+$(EXT) server.o client.o tcp.o:%.o:%.c
 	$(CC) $(CFLAGS) $(INC) -c $< -o $(notdir $@)
 
 
 .PHONY:clean
 clean:
-	rm -f *.o server client
+	rm -f *.o server tcp client

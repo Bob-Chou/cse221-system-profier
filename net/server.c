@@ -9,8 +9,10 @@
 
 #define PORT 1234
 #define N_CONNECTS 10 // only handle 1 connection
+#define RECV_BUFF_SIZE 256
 
 int main(){
+    const int recv_buf_bytes = 256 * sizeof(int); // large packet
     int serv_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     struct sockaddr_in serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
@@ -20,25 +22,26 @@ int main(){
 
     // bind server address to socket
     bind(serv_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr));
+    int * buf = (int *) malloc(recv_buf_bytes);
 
+    listen(serv_sock, 20);
+    struct sockaddr_in clnt_addr;
+    socklen_t clnt_addr_size = sizeof(clnt_addr);
+    printf("Start listening on %s:%d...\n", "127.0.0.1", PORT);
 
-    int n_conn = N_CONNECTS;
-    uint64_t * ts = (uint64_t *) malloc(2 * sizeof(uint64_t));
-    while (n_conn-- > 0)
-    {
-        listen(serv_sock, 20);
-        printf("Start listening ...\n");
-        struct sockaddr_in clnt_addr;
-        socklen_t clnt_addr_size = sizeof(clnt_addr);
+    // Always waiting for new connection
+    while (1) {
         int clnt_sock = accept(serv_sock, (struct sockaddr*) &clnt_addr, &clnt_addr_size);
-        printf("Established the %d connection, remaining %d ...\n", N_CONNECTS - n_conn, n_conn);
-
-        ts[0] = rdtsc_end();
-        // sleep to make sure read will block the client so that our timing is more accurate
-        sleep(3);
-        ts[1] = rdtsc_start();
-
-        send(clnt_sock, ts, 2 * sizeof(uint64_t), 0);
+        printf("Established a new connection. Start receiving\n");
+        int received;
+        // Always ready for receiving packets
+        while (1) {
+            while ((received = recv(clnt_sock, buf, recv_buf_bytes, 0)) > 0);
+            if (received < 0) {
+                printf("Receive done. Will close this connection.\n");
+                break;
+            }
+        }
         close(clnt_sock);
     }
     close(serv_sock);
