@@ -1,12 +1,12 @@
 TARGET = fs
 
 CC = gcc
-CFLAGS = -Wall -g -std=c99
+CFLAGS = -Wall -g -std=gnu99
 
 OS = $(shell uname -s)
 
 ifeq ($(OS), Linux)
-    CFLAGS += -pthread
+    CFLAGS += -pthread -D_GNU_SOURCE
 else
     $(info $(OS))
 endif

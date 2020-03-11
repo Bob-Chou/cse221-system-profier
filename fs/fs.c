@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include "tool.h"
 
 #define BLOCK_SIZE 4096
@@ -15,10 +16,15 @@ void sequential_read(int n, const char ** filelist, ssize_t * filebytes, uint64_
     for (int i = 0; i < n; ++i) {
         printf("Reading [%d]/[%d] ...\n", i+1, n);
         const char * filename = *(filelist + i);
-        const int fd = open(filename, O_RDONLY | O_SYNC);
 
+        // direct I/O (block file buffer cache)
+#ifdef __APPLE__
+        const int fd = open(filename, O_RDONLY);
         if(fcntl(fd, F_NOCACHE, 1) == -1)
 		    printf("Can't disable cache\n");
+#else
+        const int fd = open(filename, O_RDONLY | O_DIRECT);
+#endif
 
         if (fd < 0) {
             printf("Cannot open file %s\n", filename);
@@ -50,10 +56,15 @@ void random_read(int n, const char ** filelist, const ssize_t * filebytes, ssize
     for (int i = 0; i < n; ++i) {
         printf("Reading [%d]/[%d] ...\n", i+1, n);
         const char * filename = *(filelist + i);
-        const int fd = open(filename, O_RDONLY | O_SYNC);
 
+        // direct I/O (block file buffer cache)
+#ifdef __APPLE__
+        const int fd = open(filename, O_RDONLY);
         if(fcntl(fd, F_NOCACHE, 1) == -1)
 		    printf("Can't disable cache\n");
+#else
+        const int fd = open(filename, O_RDONLY | O_DIRECT);
+#endif
 
         if (fd < 0) {
             printf("Cannot open file %s\n", filename);
@@ -92,9 +103,14 @@ void singlethread_read(int fid, const char * filename, ssize_t * readbytes_shm, 
     ssize_t bytes_read = 0;
     ssize_t r = 0;
 
-	int fd = open(filename, O_RDONLY | O_SYNC);
-	if(fcntl(fd, F_NOCACHE, 1) == -1)
-		printf("Can't disable cache\n");
+	// direct I/O (block file buffer cache)
+#ifdef __APPLE__
+    const int fd = open(filename, O_RDONLY);
+    if(fcntl(fd, F_NOCACHE, 1) == -1)
+	    printf("Can't disable cache\n");
+#else
+    const int fd = open(filename, O_RDONLY | O_DIRECT);
+#endif
 
     uint64_t t0 = rdtsc_start();
     // read file
