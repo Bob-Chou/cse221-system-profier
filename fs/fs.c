@@ -5,12 +5,19 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
+#ifndef __APPLE__
+#include <malloc.h>
+#endif
 #include "tool.h"
 
 #define BLOCK_SIZE 4096
 
 void sequential_read(int n, const char ** filelist, ssize_t * filebytes, uint64_t * readtime) {
+#ifdef __APPLE__
+    void * buf = malloc(BLOCK_SIZE);
+#else
     void * buf = memalign(BLOCK_SIZE, BLOCK_SIZE);
+#endif
     printf("Start sequential reading %d file(s)\n", n);
     int n_read = 0;
     for (int i = 0; i < n; ++i) {
@@ -50,7 +57,11 @@ void sequential_read(int n, const char ** filelist, ssize_t * filebytes, uint64_
 }
 
 void random_read(int n, const char ** filelist, const ssize_t * filebytes, ssize_t * readbytes, uint64_t * readtime) {
+#ifdef __APPLE__
+    void * buf = malloc(BLOCK_SIZE);
+#else
     void * buf = memalign(BLOCK_SIZE, BLOCK_SIZE);
+#endif
     printf("Start random reading %d file(s)\n", n);
     int n_read = 0;
     for (int i = 0; i < n; ++i) {
@@ -98,8 +109,11 @@ void random_read(int n, const char ** filelist, const ssize_t * filebytes, ssize
 }
 
 void singlethread_read(int fid, const char * filename, ssize_t * readbytes_shm, uint64_t * readtime_shm) {
+#ifdef __APPLE__
+    void * buf = malloc(BLOCK_SIZE);
+#else
     void * buf = memalign(BLOCK_SIZE, BLOCK_SIZE);
-
+#endif
     ssize_t bytes_read = 0;
     ssize_t r = 0;
 
@@ -120,12 +134,14 @@ void singlethread_read(int fid, const char * filename, ssize_t * readbytes_shm, 
     close(fd);
     bytes_read += r;
 
-    *(readbytes_shm + fid) = bytes_read;
-    *(readtime_shm + fid) = t1 - t0;
+    readbytes_shm[fid] = bytes_read;
+    readtime_shm[fid] = t1 - t0;
 }
 
 void multithread_read(int n, const char ** filelist, ssize_t * readbytes, uint64_t * readtime) {
-    pid_t pids[n];
+    pid_t wpid, pids[n];
+    int status;
+
     void * readbytes_shm = mmap(NULL, n * sizeof(ssize_t), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
     void * readtime_shm = mmap(NULL, n * sizeof(uint64_t), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
     memset(readbytes_shm, 0, n * sizeof(ssize_t));
@@ -144,9 +160,10 @@ void multithread_read(int n, const char ** filelist, ssize_t * readbytes, uint64
 			exit(0);
 		}
 	}
-    wait(NULL);
-    memcpy(readbytes, readbytes_shm, n);
-    memcpy(readtime, readtime_shm, n);
+    // wait for all children
+    while((wpid = wait(&status)) > 0);
+    memcpy(readbytes, readbytes_shm, n * sizeof(ssize_t));
+    memcpy(readtime, readtime_shm, n * sizeof(uint64_t));
 }
 
 void summarize(const char * sumfile, int n, const char ** filelist, const ssize_t * readbytes, const uint64_t * readtime) {
@@ -207,18 +224,25 @@ int main() {
     /**
      * Sequential read
      */
+    memset(readbytes, 0, n * sizeof(ssize_t));
+    memset(filebytes, 0, n * sizeof(ssize_t));
+    memset(readtime, 0, n * sizeof(ssize_t));
     sequential_read(n, filelist, filebytes, readtime);
     summarize("sequential.csv", n, filelist, filebytes, readtime);
 
     /**
      * Random read
      */
+    memset(readbytes, 0, n * sizeof(ssize_t));
+    memset(readtime, 0, n * sizeof(ssize_t));
     random_read(n, filelist, filebytes, readbytes, readtime);
     summarize("random.csv", n, filelist, readbytes, readtime);
 
     /**
      * Multithreading read
      */
+    memset(readbytes, 0, n * sizeof(ssize_t));
+    memset(readtime, 0, n * sizeof(ssize_t));
     multithread_read(n, filelist, readbytes, readtime);
     summarize("multithreading.csv", n, filelist, readbytes, readtime);
 
