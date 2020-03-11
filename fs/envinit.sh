@@ -19,7 +19,6 @@ f.128M.d
 f.256M.d
 f.512M.d
 f.1024M.d)
-config="config"
 
 os=$(uname -s)
 blksize=0
@@ -28,10 +27,8 @@ if [ $os == Darwin ]; then
     echo "Block size: $blksize, please set in \"fs.c\""
 fi
 
-echo $blksize > $config
 for c in ${chunks[@]}; do
     echo "preparing $c"
-    echo $c >> $config
     size=$(echo $c | cut -d. -f2)
     [ ! -f $c ] && dd if=/dev/zero of=$c bs=$size count=0 seek=1 &> /dev/null
 done
