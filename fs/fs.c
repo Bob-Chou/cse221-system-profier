@@ -10,7 +10,7 @@
 #define BLOCK_SIZE 4096
 
 void sequential_read(int n, const char ** filelist, ssize_t * filebytes, uint64_t * readtime) {
-    void * buf = malloc(BLOCK_SIZE);
+    void * buf = memalign(BLOCK_SIZE, BLOCK_SIZE);
     printf("Start sequential reading %d file(s)\n", n);
     int n_read = 0;
     for (int i = 0; i < n; ++i) {
@@ -50,7 +50,7 @@ void sequential_read(int n, const char ** filelist, ssize_t * filebytes, uint64_
 }
 
 void random_read(int n, const char ** filelist, const ssize_t * filebytes, ssize_t * readbytes, uint64_t * readtime) {
-    void * buf = malloc(BLOCK_SIZE);
+    void * buf = memalign(BLOCK_SIZE, BLOCK_SIZE);
     printf("Start random reading %d file(s)\n", n);
     int n_read = 0;
     for (int i = 0; i < n; ++i) {
@@ -98,7 +98,7 @@ void random_read(int n, const char ** filelist, const ssize_t * filebytes, ssize
 }
 
 void singlethread_read(int fid, const char * filename, ssize_t * readbytes_shm, uint64_t * readtime_shm) {
-    void * buf = malloc(BLOCK_SIZE);
+    void * buf = memalign(BLOCK_SIZE, BLOCK_SIZE);
 
     ssize_t bytes_read = 0;
     ssize_t r = 0;
