@@ -8,12 +8,13 @@
 #include "tool.h"
 
 #define PORT 1234
-#define SAMPLES 100
+#define SAMPLES 20
 #define PACKET_SIZE 100 // packet size in KB
 
 void heavy_writer(char *, int, int);
 
 int main(){
+    // heavy_writer("192.168.1.35", PORT, SAMPLES); //remote LAN connection
     heavy_writer("127.0.0.1", PORT, SAMPLES);
     return 0;
 }

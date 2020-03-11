@@ -8,7 +8,7 @@
 #include "tool.h"
 
 #define PORT 1234
-#define SAMPLES 10
+#define SAMPLES 15
 
 void tcp_overhead(char *, int, int);
 
@@ -94,9 +94,10 @@ void tcp_overhead(char * ip, int port, int samples) {
         t_break += t1 - t0;
     }
 
+    uint64_t t1s = (t1s_rdtsc() + t1s_rdtsc() + t1s_rdtsc()) / 3;
     printf("\n************************** SUMMARY **************************\n");
-    printf("TCP connection: %.2f\nRTT: %.2f\nClose: %.2f\n",
-            (double)t_conn/(double)samples,
-            (double)rtt/(double)samples,
-            (double)t_break/(double)samples);
+    printf("TCP connection: %.6f ms\nRTT: %.6f ms\nClose: %.6f ms\n",
+            (double)t_conn/(double)samples/t1s*1000,
+            (double)rtt/(double)samples/t1s*1000,
+            (double)t_break/(double)samples/t1s*1000);
 }
