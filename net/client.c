@@ -9,7 +9,7 @@
 
 #define PORT 1234
 #define SAMPLES 20
-#define PACKET_SIZE 100 // packet size in KB
+#define PACKET_SIZE 10240 // packet size in KB
 
 void heavy_writer(char *, int, int);
 

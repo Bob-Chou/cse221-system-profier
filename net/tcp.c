@@ -13,6 +13,7 @@
 void tcp_overhead(char *, int, int);
 
 int main(){
+//     tcp_overhead("192.168.1.35", PORT, SAMPLES);
     tcp_overhead("127.0.0.1", PORT, SAMPLES);
     return 0;
 }
@@ -33,7 +34,7 @@ int main(){
  * on MacOS.
  */
 void tcp_overhead(char * ip, int port, int samples) {
-    int msg_bytes = 1 * sizeof(char);
+    int msg_bytes = 56; // same with ping
     char * msg = (char *) malloc(msg_bytes);
     char * buf = (char *) malloc(msg_bytes);
     uint64_t t_conn = 0, t_break = 0, rtt = 0;
@@ -69,7 +70,6 @@ void tcp_overhead(char * ip, int port, int samples) {
         /**
          * RTT profiling
          */
-        t0 = rdtsc_start();
         send(sock, msg, msg_bytes, 0);
         recv(sock, buf, msg_bytes, 0);
         t1 = rdtsc_end();
